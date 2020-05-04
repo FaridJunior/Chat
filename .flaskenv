@@ -1,0 +1,2 @@
+FLASK_APP=Backend
+FLASK_DEBUG=1
