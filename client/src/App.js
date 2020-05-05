@@ -12,37 +12,49 @@ class App extends Component {
     super(props);
     this.state = {
       userName: "",
-      userId: uuid4(),
+      userId: null,
     };
   }
+
   handleChange = (e, { name, value }) => this.setState({ [name]: value }); // handle change
 
   handleSubmit = (event) => {
-    // event.preventDefault();
-    console.log("submit ");
+    event.preventDefault();
 
     const user = {
       userName: this.state.userName,
-      userId: this.state.userId,
+      userId: uuid4(),
     };
+    this.setState({ userId: user.userId });
+    window.localStorage.setItem("user", JSON.stringify(user));
 
-    axios.post(`http://127.0.0.1:5000/login`, { user }).then((res) => {
-      console.log(res);
-      console.log(res.data);
-    });
+    axios
+      .post(`http://127.0.0.1:5000/login`, { user })
+      .then((res) => {})
+      .catch((err) => console.log(err));
   };
+  loadUser = () => {
+    const user = JSON.parse(window.localStorage.getItem("user"));
+    if (user) {
+      this.setState({ userName: user.userName, userId: user.userId });
+    }
+  };
+  componentDidMount() {
+    this.loadUser();
+  }
+
   render() {
     return (
       <Router>
         <div className="centered-wrapper">
-          <AppMenu userName={this.state.userName} />
+          <AppMenu user={this.state} />
           <Switch>
             <Route exact path="/">
-              <Home />
+              <Home user={this.state} />
             </Route>
             <Route exact path="/login">
               <LoginForm
-                userName={this.state.userName}
+                user={this.state}
                 handleChange={this.handleChange}
                 handleSubmit={this.handleSubmit}
               />

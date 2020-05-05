@@ -1,18 +1,18 @@
 import React from "react";
 import { Container, Menu, Icon, Image } from "semantic-ui-react";
 import { Link } from "react-router-dom";
-export default function AppMenu({ userName }) {
+export default function AppMenu({ user }) {
   const displayItem = () => {
-    if (userName !== "") {
+    if (user.userId !== null) {
       return (
-        <React.Fragment className="">
+        <React.Fragment>
           <Menu.Item as={Link} to="/">
             Home
           </Menu.Item>
           <Menu.Menu position="right">
             <Menu.Item>
               <Image avatar src="/myAvatar.png"></Image>
-              {userName}
+              {user.userName}
             </Menu.Item>
           </Menu.Menu>
         </React.Fragment>

@@ -8,9 +8,18 @@ import {
   Icon,
   Message,
 } from "semantic-ui-react";
+import { Redirect } from "react-router";
 
 export class LoginForm extends Component {
   render() {
+    if (this.props.user.userId !== null) {
+      return (
+        <Redirect
+          to={{ pathname: "/", state: { from: this.props.location } }}
+        />
+      );
+    }
+
     return (
       <Grid
         textAlign="center"
@@ -26,7 +35,7 @@ export class LoginForm extends Component {
               <Form.Input
                 fluid
                 name="userName"
-                value={this.props.userName}
+                value={this.props.user.userName}
                 icon="user"
                 iconPosition="left"
                 placeholder="Your Name .. "
