@@ -6,6 +6,7 @@ html {
 
 html,
 body {
+  /* background-image: url("/public/chatBk.jpeg"); */
   height: 100%;
   margin: 0;
 }
@@ -30,7 +31,6 @@ body {
 .b2 {
   height: 78%;
   width: 100%;
-  background-color: darkgrey;
 }
 .b3 {
   height: 10%;

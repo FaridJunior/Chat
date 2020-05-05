@@ -1,16 +1,6 @@
 import React, { Component } from "react";
-import {
-  Grid,
-  Image,
-  List,
-  Segment,
-  Form,
-  Input,
-  Button,
-  Container,
-  Icon,
-} from "semantic-ui-react";
-
+import { Grid, Image, List, Segment, Form, Container } from "semantic-ui-react";
+import chatBk from "./images/chatBk3.jpg";
 export class Home extends Component {
   render() {
     return (
@@ -79,8 +69,10 @@ export class Home extends Component {
                 </List.Content>
               </List.Item>
             </List>
-
-            <div className="b2"></div>
+            <div
+              className="b2"
+              style={{ backgroundImage: `url(${chatBk}` }}
+            ></div>
             <Container
               style={{
                 padding: "12px",
