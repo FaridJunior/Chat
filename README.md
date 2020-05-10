@@ -1,7 +1,7 @@
 # Chat
 
 
-chat app using
+simple chat app using
 
 in backend : Flask and Flask-socketio to mange socketio connection 
 
