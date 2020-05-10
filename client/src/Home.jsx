@@ -1,28 +1,47 @@
 import React, { Component } from "react";
-import { Grid, Image, List, Segment, Form, Container } from "semantic-ui-react";
-import chatBk from "./images/chatBk3.jpg";
+import { Grid } from "semantic-ui-react";
 import { Redirect } from "react-router-dom";
 import io from "socket.io-client";
+import ChatBoard from "./Components/ChatBoard";
+import UsersList from "./Components/UsersList";
 
 var socket;
 export class Home extends Component {
   constructor(props) {
-    console.log("home constroctor ");
     super(props);
     this.state = {
+      currentUser: this.props.userData,
       usersList: [],
-      talkTo: {},
+      talkToUser: undefined,
     };
   }
-
+  setTalkTo = (userId) => {
+    const talkToUser = this.state.usersList.filter(
+      (u) => u.userId === userId
+    )[0];
+    this.setState({ talkToUser: talkToUser }, () => {
+      this.storeState();
+    });
+  };
   setListenToEvents = () => {
     socket.on("usersList", (data) => {
       this.setState({ usersList: data.usersList });
-      console.log(data);
       this.storeState();
     });
-    socket.on("message", () => {});
+    socket.on("message", (message) => {
+      const newUsersList = this.state.usersList.filter(
+        (u) => u.userId !== message.from["userId"]
+      );
+      const fromUser = this.state.usersList.filter(
+        (u) => u.userId === message.from["userId"]
+      )[0];
+      fromUser["messages"].push(message);
+      this.setState({ usersList: [...newUsersList, fromUser] }, () => {
+        this.storeState();
+      });
+    });
   };
+
   storeState = () => {
     window.localStorage.setItem("home_state", JSON.stringify(this.state));
   };
@@ -31,7 +50,7 @@ export class Home extends Component {
     this.setState(state);
   };
   componentDidMount() {
-    console.log("user status", this.props.userData.login);
+    this.getState();
     if (this.props.userData.login) {
       socket = io("http://127.0.0.1:5000/home");
       this.setListenToEvents();
@@ -39,12 +58,39 @@ export class Home extends Component {
         console.log("emit active user");
       });
     }
-    this.getState();
-    console.log("home did mount ");
   }
+  componentWillUnmount() {
+    this.storeState();
+  }
+  sendMessage = (body) => {
+    const message = {
+      to: {
+        userName: this.state.talkToUser.userName,
+        userId: this.state.talkToUser.userId,
+        sid: this.state.talkToUser.sid,
+      },
+      from: {
+        userName: this.state.currentUser.userName,
+        userId: this.state.currentUser.userId,
+      },
+      body,
+    };
+    socket.emit("new_message", message, () => {
+      const newUsersList = this.state.usersList.filter(
+        (u) => u.userId !== message.to["userId"]
+      );
+      const toUser = this.state.usersList.filter(
+        (u) => u.userId === message.to["userId"]
+      )[0];
+      toUser["messages"].push(message);
+
+      this.setState({ usersList: [...newUsersList, toUser] }, () => {
+        this.storeState();
+      });
+    });
+  };
 
   render() {
-    console.log("home render");
     if (this.props.userData.userId === null) {
       return (
         <Redirect
@@ -52,6 +98,12 @@ export class Home extends Component {
         />
       );
     }
+
+    const otherUsersList = this.state.usersList
+      ? this.state.usersList.filter(
+          (u) => u["userId"] !== this.props.userData.userId
+        )
+      : [];
 
     return (
       <Grid
@@ -64,89 +116,17 @@ export class Home extends Component {
       >
         <Grid.Row style={{ padding: "0px" }}>
           <Grid.Column width={4} style={{ padding: "0px" }}>
-            <UsersList usersList={this.state.usersList} />
+            <UsersList usersList={otherUsersList} setTalkTo={this.setTalkTo} />
           </Grid.Column>
           <Grid.Column width={12} style={{ padding: "0px" }}>
-            <ChatBoard />
+            <ChatBoard
+              talkToUser={this.state.talkToUser}
+              sendMessage={this.sendMessage}
+            />
           </Grid.Column>
         </Grid.Row>
       </Grid>
     );
   }
 }
-
 export default Home;
-
-class UsersList extends Component {
-  constructor(props) {
-    super(props);
-  }
-  displayUsers = (users) => {
-    return users.map((user, i) => {
-      return (
-        <List.Item key={i}>
-          <Image avatar src="/myAvatar.png" />
-          <List.Content verticalAlign="top">
-            <List.Header>{user["userName"]}</List.Header>
-            <List.Description>Last seen watching</List.Description>
-          </List.Content>
-        </List.Item>
-      );
-    });
-  };
-  render() {
-    return (
-      <Segment style={{ height: "92vh" }} inverted>
-        <List selection divided verticalAlign="middle" size="huge" inverted>
-          {this.props.usersList && this.displayUsers(this.props.usersList)}
-        </List>
-      </Segment>
-    );
-  }
-}
-
-class ChatBoard extends Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    return (
-      <React.Fragment>
-        <List
-          animated
-          verticalAlign="middle"
-          size="big"
-          style={{
-            padding: "14px",
-            marginBottom: "0px",
-            backgroundColor: "#ECEFF1",
-          }}
-        >
-          <List.Item>
-            <Image avatar src="/myAvatar.png" />
-            <List.Content>
-              <List.Header>mohamed</List.Header>
-            </List.Content>
-          </List.Item>
-        </List>
-        <div className="b2" style={{ backgroundImage: `url(${chatBk}` }}></div>
-        <Container
-          style={{
-            padding: "12px",
-            backgroundColor: "#ECEFF1",
-          }}
-          textAlign="center"
-        >
-          <Form size="large">
-            <Form.Field size="large" required>
-              <input
-                placeholder="Type a Message ."
-                style={{ borderRadius: "2rem" }}
-              />
-            </Form.Field>
-          </Form>
-        </Container>
-      </React.Fragment>
-    );
-  }
-}

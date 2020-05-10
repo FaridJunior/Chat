@@ -30,17 +30,16 @@ def handle_active_user(data):
     if (current_user):
         current_user["active"] = True
         current_user["sid"] = request.sid
-        print(usersList)
         emit("usersList", {"usersList": usersList}, broadcast=True)
 
 
-# @socketio.on("message")
-# def handle_recive_message(data):
-#     message = data.get("message")
-#     if message:
-#         to = message.get("to")
-#         # send message to specific user by using sid as room name
-#         socketio.emit("message", {"message": message}, room=to.sid)
+@socketio.on("new_message", namespace="/home")
+def handle_recive_message(message):
+    print("message", message)
+    if message:
+        to = message.get("to")
+        print("to object ", to)
+        emit("message", message, room=to["sid"])
 
 
 # @socketio.on("disconnect")

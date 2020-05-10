@@ -10,7 +10,7 @@ def handle_login():
     userId = user.get("userId")
     if userName is not None and userId is not None:
         usersList.append(
-            {"userName": userName, "userId": userId, "sid": "", "active": False})
+            {"userName": userName, "userId": userId, "sid": "", "active": False, "messages": []})
         return {"usersList": usersList}
     else:
         return {"error": "user not valid"}

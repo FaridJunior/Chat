@@ -13,7 +13,6 @@ class App extends Component {
     this.state = {
       userName: "",
       userId: null,
-      login: false,
       active: false,
     };
   }
