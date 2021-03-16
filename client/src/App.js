@@ -33,10 +33,11 @@ class App extends Component {
           userId: user.userId,
           login: true,
         });
-        window.localStorage.setItem("userData", JSON.stringify(this.state));
+        // window.localStorage.setItem("userData", JSON.stringify(this.state));
       })
       .catch((err) => console.log(err));
   };
+
   loadUser = () => {
     const userData = JSON.parse(window.localStorage.getItem("userData"));
     if (userData) {
@@ -48,7 +49,7 @@ class App extends Component {
     }
   };
   componentDidMount() {
-    this.loadUser();
+    // this.loadUser();
   }
 
   render() {

@@ -10,7 +10,7 @@ class UsersList extends Component {
   };
   render() {
     return (
-      <Segment style={{ height: "94vh" }} inverted>
+      <Segment style={{ height: "100vh" }} inverted>
         <List selection divided verticalAlign="middle" size="huge" inverted>
           {this.props.usersList && this.displayUsers(this.props.usersList)}
         </List>

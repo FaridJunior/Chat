@@ -90,6 +90,7 @@ class ChatBoard extends Component {
           style={{
             backgroundImage: `url(${chatBk}`,
             overflow: "scroll",
+            height: "100%",
           }}
         >
           {this.displayMessages()}

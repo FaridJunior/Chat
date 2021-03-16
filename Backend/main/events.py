@@ -7,16 +7,10 @@ from .. import socketio
 @socketio.on("connect", namespace="/home")
 def handle_connect():
     """
-    search for current user in userslist and change his stats from active:False to True 
-    and send broadcast with userList   
+    search for current user in userslist and change his stats from active:False to True
+    and send broadcast with userList
     """
-    # userId = data["userId"]
-    # current_user = search()  # search by the id in the session
-    # current_user["active"] = True
-    # current_user["sid"] = request.sid
-    # session["name"] = "newname"
-    # print("userlist", usersList, "session", session)
-    emit("usersList", "name", broadcast=True)
+    emit("active_user", "name", broadcast=True)
 
 
 @socketio.on("active_user", namespace="/home")
@@ -30,7 +24,7 @@ def handle_active_user(data):
     if (current_user):
         current_user["active"] = True
         current_user["sid"] = request.sid
-        emit("usersList", {"usersList": usersList}, broadcast=True)
+        emit("active_user", {"usersList": usersList}, broadcast=True)
 
 
 @socketio.on("new_message", namespace="/home")
@@ -42,19 +36,28 @@ def handle_recive_message(message):
         emit("message", message, room=to["sid"])
 
 
-# @socketio.on("disconnect")
-# def handle_disconnect(user):
-#     """
-#     search for user and change his state to un active and broadcast usersList
-#     """
-#     current_user = search(userId)
-#     current_user["active"] = False
-#     emit("usersList", {"usersList", usersList}, broadcast=True)
-
-
 # utilites
 def search(userId):
     """ search for current user by user id in users List   """
     user = next(
         (u for u in usersList if u["userId"] == userId), None)
     return user
+
+
+@socketio.on("disconnect")
+def handle_disconnect(data):
+    """
+    search for user and change his state to un active and broadcast usersList
+    """
+    userId = data["userId"]
+    current_user = search(userId)
+    current_user["active"] = False
+    emit("active_user", {"usersList", usersList}, broadcast=True)
+
+
+# userId = data["userId"]
+# current_user = search()  # search by the id in the session
+# current_user["active"] = True
+# current_user["sid"] = request.sid
+# session["name"] = "newname"
+# print("userlist", usersList, "session", session)

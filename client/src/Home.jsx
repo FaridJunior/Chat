@@ -1,11 +1,16 @@
 import React, { Component } from "react";
 import { Grid } from "semantic-ui-react";
 import { Redirect } from "react-router-dom";
-import io from "socket.io-client";
 import ChatBoard from "./Components/ChatBoard";
 import UsersList from "./Components/UsersList";
+import {
+  setSocket,
+  listenToMessage,
+  listenToActiveUser,
+  activateUser,
+  sendMessage,
+} from "./Socket/socket";
 
-var socket;
 export class Home extends Component {
   constructor(props) {
     super(props);
@@ -15,53 +20,32 @@ export class Home extends Component {
       talkToUser: undefined,
     };
   }
+
   setTalkTo = (userId) => {
-    const talkToUser = this.state.usersList.filter(
-      (u) => u.userId === userId
-    )[0];
-    this.setState({ talkToUser: talkToUser }, () => {
-      this.storeState();
-    });
+    const talkToUser = this.state.usersList.find((u) => u.userId === userId);
+    this.setState({ talkToUser: talkToUser });
   };
+
   setListenToEvents = () => {
-    socket.on("usersList", (data) => {
-      this.setState({ usersList: data.usersList });
-      this.storeState();
-    });
-    socket.on("message", (message) => {
-      const newUsersList = this.state.usersList.filter(
-        (u) => u.userId !== message.from["userId"]
-      );
-      const fromUser = this.state.usersList.filter(
-        (u) => u.userId === message.from["userId"]
-      )[0];
+    listenToMessage((message) => {
+      const newUsersList = this.state.usersList.filter((u) => u.userId !== message.from["userId"]);
+      const fromUser = this.state.usersList.find((u) => u.userId === message.from["userId"]);
       fromUser["messages"].push(message);
-      this.setState({ usersList: [...newUsersList, fromUser] }, () => {
-        this.storeState();
-      });
+      this.setState({ usersList: [...newUsersList, fromUser] });
+    });
+    listenToActiveUser((data) => {
+      this.setState({ usersList: data.usersList });
     });
   };
 
-  storeState = () => {
-    window.localStorage.setItem("home_state", JSON.stringify(this.state));
-  };
-  getState = () => {
-    const state = JSON.parse(window.localStorage.getItem("home_state"));
-    this.setState(state);
-  };
   componentDidMount() {
-    this.getState();
     if (this.props.userData.login) {
-      socket = io("http://127.0.0.1:5000/home");
+      setSocket();
       this.setListenToEvents();
-      socket.emit("active_user", { userId: this.props.userData.userId }, () => {
-        console.log("emit active user");
-      });
+      activateUser({ userId: this.props.userData.userId });
     }
   }
-  componentWillUnmount() {
-    this.storeState();
-  }
+
   sendMessage = (body) => {
     const message = {
       to: {
@@ -75,34 +59,22 @@ export class Home extends Component {
       },
       body,
     };
-    socket.emit("new_message", message, () => {
-      const newUsersList = this.state.usersList.filter(
-        (u) => u.userId !== message.to["userId"]
-      );
-      const toUser = this.state.usersList.filter(
-        (u) => u.userId === message.to["userId"]
-      )[0];
-      toUser["messages"].push(message);
 
-      this.setState({ usersList: [...newUsersList, toUser] }, () => {
-        this.storeState();
-      });
+    sendMessage(message, () => {
+      const newUsersList = this.state.usersList.filter((u) => u.userId !== message.to["userId"]);
+      const toUser = this.state.usersList.find((u) => u.userId === message.to["userId"]);
+      toUser["messages"].push(message);
+      this.setState({ usersList: [...newUsersList, toUser] });
     });
   };
 
   render() {
     if (this.props.userData.userId === null) {
-      return (
-        <Redirect
-          to={{ pathname: "/login", state: { from: this.props.location } }}
-        />
-      );
+      return <Redirect to={{ pathname: "/login", state: { from: this.props.location } }} />;
     }
 
     const otherUsersList = this.state.usersList
-      ? this.state.usersList.filter(
-          (u) => u["userId"] !== this.props.userData.userId
-        )
+      ? this.state.usersList.filter((u) => u["userId"] !== this.props.userData.userId)
       : [];
 
     return (
@@ -118,11 +90,17 @@ export class Home extends Component {
           <Grid.Column width={4} style={{ padding: "0px" }}>
             <UsersList usersList={otherUsersList} setTalkTo={this.setTalkTo} />
           </Grid.Column>
-          <Grid.Column width={12} style={{ padding: "0px" }}>
-            <ChatBoard
-              talkToUser={this.state.talkToUser}
-              sendMessage={this.sendMessage}
-            />
+          <Grid.Column
+            width={12}
+            style={{
+              padding: "0px",
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <ChatBoard talkToUser={this.state.talkToUser} sendMessage={this.sendMessage} />
           </Grid.Column>
         </Grid.Row>
       </Grid>
